@@ -6,6 +6,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -16,10 +17,11 @@ public class frmdevuelta extends JFrame {
 
     private int[] denominaciones = new int[] { 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50 };
     private int[] existencias = new int[denominaciones.length];
-    private String[] encabezados=new String[] {"cantidad", "presentacion", "denominacion"}; 
+    private String[] encabezados = new String[] { "cantidad", "presentacion", "denominacion" };
     private JComboBox cmbDenominacion;
     private JTextField txtExistencia;
-    private JTextField txtDevuelta; 
+    private JTextField txtDevuelta;
+    private JTable tblDevuelta;
 
     public frmdevuelta() {
 
@@ -84,14 +86,23 @@ public class frmdevuelta extends JFrame {
         btnDevuelta.setBounds(280, 70, 150, 25);
         getContentPane().add(btnDevuelta);
 
-        JTable tblDevuelta= new JTable();
-        JScrollPane spDevuelta= new JScrollPane(tblDevuelta); 
+        tblDevuelta = new JTable();
+        JScrollPane spDevuelta = new JScrollPane(tblDevuelta);
         spDevuelta.setBounds(10, 100, 480, 250);
         getContentPane().add(spDevuelta);
 
-        DefaultTableModel dtmDevuelta= new DefaultTableModel(null, encabezados);
+        DefaultTableModel dtmDevuelta = new DefaultTableModel(null, encabezados);
         tblDevuelta.setModel(dtmDevuelta);
 
+        // evento para calculo devuelta
+        btnDevuelta.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                calcularDevuelta();
+            }
+
+        });
 
     }
 
@@ -103,5 +114,55 @@ public class frmdevuelta extends JFrame {
 
     private void actualizarExistencia() {
         existencias[cmbDenominacion.getSelectedIndex()] = Integer.parseInt(txtExistencia.getText());
+
     }
+
+    private void calcularDevuelta() {
+
+        int valorDevuelta = Integer.parseInt(txtDevuelta.getText());
+
+        int[] devuelta = new int[denominaciones.length];
+
+        int i = 0;
+        while (valorDevuelta > 0 && i < denominaciones.length) {
+            if (valorDevuelta > denominaciones[i]) {
+                int cantidadNecesaria = (valorDevuelta - valorDevuelta % denominaciones[i]) / denominaciones[i];
+                devuelta[i] = cantidadNecesaria <= existencias[i] ? cantidadNecesaria : existencias[i]; 
+
+
+                valorDevuelta -= devuelta[i] * denominaciones[i]; 
+            }
+            i++;
+
+        }
+
+        int totalFilas =0; 
+        for(int i=0; i<devuelta.length; i++ ){
+
+            if(devuelta[i]>0 )
+               totalFilas++; 
+        }
+
+        String[][] resultado=new String[totalFilas][encabezados.length];
+        int fila=0; 
+        for(int i=0; i<devuelta.length; i++ ){
+
+            if(devuelta[i]>0 ) {
+                resultado[fila][0] = String.valueOf(devuelta[i]); 
+                resultado[fila][1]= denominaciones[i] >1000? "billete" : "moneda" ;
+                resultado[fila][2] = String.valueOf( denominaciones[i]);
+
+                fila++; 
+            } 
+        }
+        DefaultTableModel dtmDevuelta = new DefaultTableModel(resultado, encabezados);
+        tblDevuelta.setModel(dtmDevuelta);
+
+         if(valorDevuelta > 0 ) {
+
+             JOptionPane.showMessageDialog(null, "queda pendiente $" + valorDevuelta);
+        }
+
+    }    
+
 }
